@@ -1,0 +1,60 @@
+import sqlite3
+import tkinter as tk
+from tkinter import messagebox
+
+# Database setup
+conn = sqlite3.connect("tasks.db")
+cursor = conn.cursor()
+cursor.execute('''CREATE TABLE IF NOT EXISTS tasks (
+    id INTEGER PRIMARY KEY AUTOINCREMENT,
+    title TEXT NOT NULL,
+    description TEXT
+)''')
+conn.commit()
+
+# Main application class
+class TaskManager:
+    def __init__(self, root):
+        self.root = root
+        self.root.title("Task Manager")
+
+        # Labels and Entries
+        tk.Label(root, text="Title").grid(row=0, column=0)
+        tk.Label(root, text="Description").grid(row=1, column=0)
+        self.title_entry = tk.Entry(root)
+        self.description_entry = tk.Entry(root)
+        self.title_entry.grid(row=0, column=1)
+        self.description_entry.grid(row=1, column=1)
+
+        # Buttons
+        tk.Button(root, text="Add Task", command=self.add_task).grid(row=2, column=0)
+        tk.Button(root, text="Update Task", command=self.update_task).grid(row=2, column=1)
+        tk.Button(root, text="Delete Task", command=self.delete_task).grid(row=3, column=0)
+        tk.Button(root, text="View Tasks", command=self.view_tasks).grid(row=3, column=1)
+
+        # Listbox and Scrollbar
+        self.tasks_listbox = tk.Listbox(root, width=50, height=15)
+        self.tasks_listbox.grid(row=4, column=0, columnspan=2)
+        self.tasks_listbox.bind("<<ListboxSelect>>", self.load_task)
+
+    # CRUD operations
+    def add_task(self):
+        title = self.title_entry.get()
+        description = self.description_entry.get()
+        if title:
+            cursor.execute("INSERT INTO tasks (title, description) VALUES (?, ?)", (title, description))
+            conn.commit()
+            self.clear_entries()
+            self.view_tasks()
+        else:
+            messagebox.showwarning("Input Error", "Title cannot be empty!")
+
+    def view_tasks(self):
+        self.tasks_listbox.delete(0, tk.END)
+        cursor.execute("SELECT * FROM tasks")
+        for task in cursor.fetchall():
+            self.tasks_listbox.insert(tk.END, f"{task[0]}: {task[1]} - {task[2]}")
+
+    def load_task(self, event):
+        try:
+            selected_task = self.tasks_listbox.g
